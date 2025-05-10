@@ -5,6 +5,8 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
       POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     networks:
@@ -44,6 +46,9 @@ services:
       - app2
     networks:
       - my-bridge
+
+volumes:
+  postgres_data:
 
 networks:
   my-bridge:
