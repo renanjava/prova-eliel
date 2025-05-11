@@ -64,3 +64,53 @@ spec:
     requests:
       storage: 8Gi
   storageClassName: csi-hostpath-sc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: csi-hostpath-sc
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-dump
+spec:
+  schedule: "0 3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: postgres-dump
+            image: postgres:17.5
+            command:
+            - /bin/sh
+            - -c
+            - |
+              pg_dump -h postgres -U $POSTGRES_USER -d $POSTGRES_DB > /postgresdump/dump.sql
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /postgresdump
+            env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: POSTGRES_DB
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-pvc
