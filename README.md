@@ -1,6 +1,6 @@
-<h1>CRUD com Load Balancer no NGINX (Entidade Pessoa e Trabalho)</h1>
+<h1>CRUD com Load Balancer no NGINX e Kubernetes (Entidade Pessoa e Trabalho)</h1>
 <p>
-  É uma <strong>API RESTful básica</strong> desenvolvida para gerenciar entidades de <em>Pessoa</em> e <em>Trabalho</em>, com um relacionamento entre elas. A aplicação utiliza o framework <strong>NestJS</strong> e o ORM <strong>Prisma</strong> para persistência de dados em um banco PostgreSQL. Além disso, a aplicação é escalável, utilizando múltiplas instâncias balanceadas por um servidor <strong>NGINX</strong>.
+  É uma <strong>API RESTful avançada</strong> desenvolvida para gerenciar entidades de <em>Pessoa</em> e <em>Trabalho</em>, com um relacionamento entre elas. A aplicação utiliza o framework <strong>NestJS</strong> e o ORM <strong>Prisma</strong> para persistência de dados em um banco PostgreSQL. Além disso, a aplicação é escalável, utilizando múltiplas instâncias balanceadas por um servidor <strong>NGINX</strong> e gerenciada em um cluster <strong>Kubernetes</strong>.
 </p>
 
 <h2>Funcionalidades</h2>
@@ -11,6 +11,7 @@
   <li><strong>Validação de Dados</strong>: Validação robusta de DTOs (Data Transfer Objects) utilizando <strong>class-validator</strong>.</li>
   <li><strong>Persistência com PostgreSQL</strong>: Banco de dados relacional gerenciado pelo Prisma ORM.</li>
   <li><strong>Load Balancer</strong>: Utilização de NGINX para balancear a carga entre múltiplas instâncias da aplicação.</li>
+  <li><strong>Monitoramento e Backup</strong>: Health Check com LivenessProbe e backup diário do banco de dados às 03:00 da manhã.</li>
 </ul>
 
 <h2>Tecnologias Utilizadas</h2>
@@ -20,7 +21,9 @@
   <li><strong>Prisma</strong>: ORM para gerenciar o banco PostgreSQL, incluindo migrations e sincronização de dados.</li>
   <li><strong>PostgreSQL</strong>: Banco de dados relacional para armazenar pessoas e trabalhos.</li>
   <li><strong>NGINX</strong>: Servidor web utilizado como load balancer.</li>
-  <li><strong>Docker</strong>: Contêineres para a aplicação e banco de dados.</li>
+  <li><strong>Docker</strong>: Contêineres para a aplicação, banco de dados e servidor web.</li>
+  <li><strong>Kubernetes</strong>: Orquestração de contêineres para gerenciar pods, services, deployments e replicasets.</li>
+  <li><strong>Minikube</strong>: Ambiente de desenvolvimento local para Kubernetes.</li>
 </ul>
 
 <h2>Pré-requisitos</h2>
@@ -28,81 +31,114 @@
 <ul>
   <li><a href="https://nodejs.org/">Node.js</a> (v16 ou superior)</li>
   <li><a href="https://www.docker.com/">Docker</a> e <a href="https://docs.docker.com/compose/">Docker Compose</a></li>
+  <li><a href="https://kubernetes.io/docs/tasks/tools/">Kubectl</a></li>
+  <li><a href="https://minikube.sigs.k8s.io/docs/start/">Minikube</a></li>
 </ul>
 
-<h2>Instalação</h2>
+<h2>Como Executar a Aplicação</h2>
+
+<h3>Executando com Docker</h3>
 <ol>
-  <li>
-    <p><strong>Clone o repositório</strong>:</p>
-    <pre><code>git clone https://github.com/seu-usuario/pessoa-trabalho-crud.git
-cd pessoa-trabalho-crud</code></pre>
+  <li><strong>Clone o repositório</strong>:
+    <pre>git clone https://github.com/renanjava/prova-eliel
+cd prova-eliel</pre>
   </li>
-  <li>
-    <p><strong>Configure as variáveis de ambiente</strong>:</p>
-    <p>Crie um arquivo <code>.env</code> na raiz com base no <code>.env.example</code>:</p>
-    <pre><code>DATABASE_URL=postgresql://user:password@localhost:5432/mydb
-PORT=3000</code></pre>
+  <li><strong>Configure as variáveis de ambiente</strong>:
+    <p>Crie um arquivo <code>.env</code> com base no <code>.env.example</code>:</p>
+    <pre>
+DATABASE_URL=postgresql://user:password@postgres:5432/my_db
+PORT=3000
+    </pre>
   </li>
-  <li>
-    <p><strong>Suba os contêineres</strong>:</p>
-    <pre><code>docker-compose up --build</code></pre>
-    <p>Isso iniciará o banco de dados PostgreSQL, duas instâncias da aplicação e o servidor NGINX.</p>
+  <li><strong>Suba os contêineres com Docker Compose</strong>:
+    <pre>docker-compose up --build</pre>
+    <p>Isso iniciará o banco PostgreSQL, duas instâncias da aplicação NestJS e o NGINX como Load Balancer.</p>
   </li>
 </ol>
 
-<h2>Endpoints Principais</h2>
-<table>
-  <tr>
-    <th>Método</th>
-    <th>Endpoint</th>
-    <th>Descrição</th>
-    <th>Exemplo de Body</th>
-  </tr>
-  <tr>
-    <td>GET</td>
-    <td><code>localhost/</code></td>
-    <td>Retorna a informação sobre qual foi o servidor que recebeu a requisição</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>POST</td>
-    <td><code>localhost/pessoa</code></td>
-    <td>Cria uma nova pessoa</td>
-    <td><code>{ "nome": "João", "cpf": "12345678900", "trabalhoId": "uuid" }</code></td>
-  </tr>
-  <tr>
-    <td>GET</td>
-    <td><code>localhost/pessoa/:id</code></td>
-    <td>Retorna os dados de uma pessoa</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>POST</td>
-    <td><code>localhost/trabalho</code></td>
-    <td>Cria um novo trabalho</td>
-    <td><code>{ "nome": "Engenheiro", "descricao": "Desenvolve projetos" }</code></td>
-  </tr>
-  <tr>
-    <td>GET</td>
-    <td><code>localhost/trabalho/:id</code></td>
-    <td>Retorna os dados de um trabalho</td>
-    <td>-</td>
-  </tr>
-</table>
+<h3>Executando com Kubernetes (via Minikube)</h3>
+<ol>
+  <li>
+    <strong>Inicie o Minikube com suporte ao provisionamento de volumes:</strong>
+    <p>O addon <code>default-storageclass</code> é necessário para que os volumes persistentes funcionem corretamente no cluster.</p>
+    <pre>minikube start --addons=default-storageclass</pre>
+  </li>
 
-<h3>Exemplo de Requisição</h3>
-<pre><code>curl -X POST "http://localhost/pessoa" -H "Content-Type: application/json" -d '{
-  "nome": "João",
-  "cpf": "12345678900",
-  "trabalhoId": "uuid"
-}'</code></pre>
+  <li>
+    <strong>Monte os arquivos de configuração necessários:</strong>
+    <p>Monte um diretório local (<code>./config</code>) dentro do Minikube, permitindo que o cluster acesse a configuração de criptografia de dados sensíveis.</p>
+    <pre>minikube mount ./config:/var/lib/minikube/certs/config</pre>
+  </li>
+
+  <li>
+    <strong>Reinicie o Minikube com a configuração de criptografia ativada:</strong>
+    <p>Essa etapa configura o servidor da API para usar a política de criptografia definida no arquivo <code>crypt.yaml</code>.</p>
+    <pre>minikube start --extra-config=apiserver.encryption-provider-config=/var/lib/minikube/certs/config/crypt.yaml --addons=default-storageclass</pre>
+  </li>
+
+  <li>
+    <strong>Ative o <code>metrics-server</code>:</strong>
+    <p>Esse addon permite coletar métricas dos pods, como uso de CPU e memória.</p>
+    <pre>minikube addons enable metrics-server</pre>
+  </li>
+
+  <li>
+    <strong>Ative o addon de volumes persistentes:</strong>
+    <p>Permite o uso de volumes persistentes com o driver de armazenamento local padrão.</p>
+    <pre>minikube addons enable csi-hostpath-driver</pre>
+  </li>
+
+  <li>
+    <strong>Abra o dashboard do Minikube:</strong>
+    <p>Interface gráfica para visualizar recursos do cluster em tempo real.</p>
+    <pre>minikube dashboard</pre>
+  </li>
+
+  <li>
+    <strong>Aplique todos os manifestos YAML do projeto:</strong>
+    <p>Cria os recursos do banco de dados, da aplicação, e do NGINX dentro do cluster.</p>
+    <pre>
+kubectl apply -f db-configmaps.yaml
+kubectl apply -f db-secrets.yaml
+kubectl apply -f db-statefulsets.yaml
+kubectl apply -f app-configmaps.yaml
+kubectl apply -f app-secrets.yaml
+kubectl apply -f app-deployment.yaml
+kubectl apply -f app-service.yaml
+kubectl apply -f nginx-config.yaml
+kubectl apply -f nginx-deployment.yaml
+kubectl apply -f nginx-service-loadbalancer.yaml
+    </pre>
+  </li>
+  <li>
+    <strong>Inicie o túnel do Minikube:</strong>
+    <p>O túnel cria rotas no seu sistema para permitir o acesso externo ao LoadBalancer.</p>
+    <pre>minikube tunnel</pre>
+  </li>
+
+  <li>
+    <strong>Verifique os serviços do cluster:</strong>
+    <p>O comando abaixo mostra os serviços criados, incluindo o <code>EXTERNAL-IP</code> do LoadBalancer.</p>
+    <pre>kubectl get svc</pre>
+  </li>
+
+  <li>
+    <strong>Acesse a aplicação pelo navegador:</strong>
+    <p>Copie a URL do campo <code>EXTERNAL-IP</code> referente ao serviço NGINX e cole no seu navegador para acessar a aplicação.</p>
+  </li>
+</ol>
 
 <h2>Arquitetura</h2>
 <ul>
-  <li><strong>Banco de Dados:</strong> PostgreSQL gerenciado pelo Prisma.</li>
-  <li><strong>Load Balancer:</strong> NGINX balanceando a carga entre duas instâncias da aplicação.</li>
-  <li><strong>Contêineres:</strong> Configurados via Docker Compose.</li>
+  <li><strong>Banco de Dados:</strong> PostgreSQL gerenciado pelo Prisma e Kubernetes StatefulSets.</li>
+  <li><strong>Load Balancer:</strong> NGINX balanceando a carga entre múltiplas instâncias da aplicação.</li>
+  <li><strong>Configuração:</strong> ConfigMaps para variáveis de ambiente e Secrets para valores sensíveis.</li>
+  <li><strong>Backup:</strong> CronJob para backup diário do banco de dados às 03:00 da manhã.</li>
+  <li><strong>Volumes:</strong> PersistentVolumeClaim para armazenamento de dados do banco.</li>
+  <li><strong>Monitoramento:</strong> Health Check com LivenessProbe a cada 3 segundos.</li>
 </ul>
 
 <h2>Escalabilidade</h2>
-<p>O uso de NGINX como load balancer permite distribuir requisições entre múltiplas instâncias da aplicação, garantindo alta disponibilidade e melhor desempenho.</p>
+<p>
+  O uso de Kubernetes permite gerenciar réplicas da aplicação, garantindo alta disponibilidade e resiliência. O NGINX atua como Load Balancer, distribuindo requisições entre as instâncias. Além disso, o armazenamento persistente e os backups automáticos garantem a integridade dos dados.
+</p>
