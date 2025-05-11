@@ -6,10 +6,15 @@ data:
   nginx.conf: |
     events {}
     http {
+      upstream app-service_upstream {
+          server app-service:80;
+      }
+
       server {
         listen 80;
+
         location / {
-          proxy_pass http://app-service:3000;
+          proxy_pass http://app-service_upstream;
         }
       }
     }
