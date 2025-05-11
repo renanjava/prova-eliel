@@ -30,3 +30,9 @@ spec:
               secretKeyRef:
                 name: app-secrets
                 key: DATABASE_URL
+          livenessProbe:
+            httpGet:
+              path: /pessoa
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 3
