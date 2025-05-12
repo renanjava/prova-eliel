@@ -1,3 +1,4 @@
+import { MinioClientService } from 'src/datastorage/minio-client.service';
 import {
   Controller,
   Get,
@@ -17,7 +18,10 @@ import { BufferedFile } from 'src/datastorage/interfaces/bufferedFile.interface'
 
 @Controller('pessoa')
 export class PessoaController {
-  constructor(private readonly pessoaService: PessoaService) {}
+  constructor(
+    private readonly pessoaService: PessoaService,
+    private readonly minioClientService: MinioClientService,
+  ) {}
 
   @Post()
   async create(@Body() createPessoaDto: CreatePessoaDto) {
@@ -31,7 +35,7 @@ export class PessoaController {
     @UploadedFile() image: BufferedFile,
   ) {
     await this.findOne(id);
-    return await this.pessoaService.uploadProfilePicture({
+    return await this.minioClientService.upload({
       ...image,
       fieldname: id,
     });

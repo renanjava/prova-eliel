@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/require-await */
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MinioModule } from 'nestjs-minio-client';
 import { MinioClientService } from './minio-client.service';
+import { PessoaModule } from 'src/pessoa/pessoa.module';
 
 @Module({
   imports: [
+    forwardRef(() => PessoaModule),
     MinioModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

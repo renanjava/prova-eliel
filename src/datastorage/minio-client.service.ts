@@ -1,18 +1,37 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { MinioService } from 'nestjs-minio-client';
 import { Readable } from 'stream';
 import { BufferedFile } from './interfaces/bufferedFile.interface';
 import * as ShortUUID from 'short-uuid';
+import { ConfigService } from '@nestjs/config';
+import { PessoaService } from 'src/pessoa/pessoa.service';
 
 @Injectable()
 export class MinioClientService {
-  private readonly bucketName = process.env.MINIO_BUCKET_NAME;
   private readonly logger: Logger;
   private readonly translator = ShortUUID();
+  private bucketName: string;
 
-  constructor(private readonly minioService: MinioService) {
+  constructor(
+    private readonly minioService: MinioService,
+    private readonly configService: ConfigService,
+    private readonly pessoaService: PessoaService,
+  ) {
+    const bucketNameVar = this.configService.get('MINIO_BUCKET_NAME');
+    if (!bucketNameVar) {
+      throw new NotFoundException(
+        'Variável de ambiente do nome do bucket não definida',
+      );
+    }
+    this.bucketName = bucketNameVar;
     this.logger = new Logger('MinioService');
     const policy = {
       Version: '2012-10-17',
@@ -50,13 +69,21 @@ export class MinioClientService {
       JSON.stringify(policy),
       function (err) {
         if (err) throw err;
-        console.log('Bucket policy set');
+        console.log('Política do Bucket setada com sucesso');
       },
     );
   }
 
-  public upload(file: BufferedFile, bucketName: string = this.bucketName!) {
-    const fileName = this.getFileName(file.originalname, file.fieldname);
+  public async upload(
+    file: BufferedFile,
+    bucketName: string = this.bucketName,
+  ) {
+    if (!(file.mimetype.includes('jpeg') || file.mimetype.includes('png'))) {
+      throw new HttpException('Invalid File Extension', HttpStatus.BAD_REQUEST);
+    }
+
+    const pessoaId = file.fieldname;
+    const fileName = this.getFileName(file.originalname, pessoaId);
 
     this.client.putObject(
       bucketName,
@@ -73,16 +100,24 @@ export class MinioClientService {
       },
     );
 
-    return this.generateFileUrl(fileName);
+    await this.pessoaService.update(pessoaId, {
+      profilePictureUrl: fileName,
+    });
+    return {
+      url: this.generateFileUrl(fileName),
+    };
   }
 
-  getFileName(originalName: string, fieldName: string) {
+  private getFileName(originalName: string, pessoaId: string) {
     const extension = this.getFileExtension(originalName);
 
-    return `${this.encodeUUID(fieldName)}-profile-picture${extension}`;
+    return `${this.encodeUUID(pessoaId)}-profile-picture${extension}`;
   }
 
-  async download(bucket: string, fileName: string): Promise<Readable> {
+  async download(
+    bucket: string = this.bucketName,
+    fileName: string,
+  ): Promise<Readable> {
     return await this.minioService.client.getObject(bucket, fileName);
   }
 
@@ -90,7 +125,7 @@ export class MinioClientService {
     return await this.minioService.client.removeObject(bucket, fileName);
   }
 
-  encodeUUID(uuid: string): string {
+  private encodeUUID(uuid: string): string {
     return this.translator.fromUUID(uuid);
   }
 

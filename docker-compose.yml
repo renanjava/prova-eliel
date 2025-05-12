@@ -12,38 +12,20 @@ services:
     networks:
       - my-bridge
 
-  app1:
+  app:
     build: .
     ports:
-      - 3001:3000
+      - 3000:3000
     environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/my_db1
-      PORT: 3001
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: ${PORT}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
     depends_on:
       - postgres
-    networks:
-      - my-bridge
-
-  app2:
-    build: .
-    ports:
-      - 3002:3000
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/my_db2
-      PORT: 3002
-    depends_on:
-      - postgres
-    networks:
-      - my-bridge
-  nginx:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    depends_on:
-      - app1
-      - app2
     networks:
       - my-bridge
   minio:
@@ -52,11 +34,13 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server --console-address ":9001" /data
     volumes:
       - minio_data:/data
+    networks:
+      - my-bridge
 
 volumes:
   postgres_data:

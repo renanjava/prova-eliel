@@ -9,5 +9,6 @@ import { MinioClientModule } from 'src/datastorage/minio-client.module';
   imports: [PrismaModule, MinioClientModule],
   controllers: [PessoaController],
   providers: [PessoaService, PessoaRepository],
+  exports: [PessoaService],
 })
 export class PessoaModule {}
