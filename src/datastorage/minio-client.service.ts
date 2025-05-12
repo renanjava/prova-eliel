@@ -82,7 +82,7 @@ export class MinioClientService {
       throw new HttpException('Invalid File Extension', HttpStatus.BAD_REQUEST);
     }
 
-    const pessoaId = file.fieldname;
+    const pessoaId = file.id;
     const fileName = this.getFileName(file.originalname, pessoaId);
 
     this.client.putObject(
@@ -101,7 +101,7 @@ export class MinioClientService {
     );
 
     await this.pessoaService.update(pessoaId, {
-      profilePictureUrl: fileName,
+      fotoPerfil: fileName,
     });
     return {
       url: this.generateFileUrl(fileName),

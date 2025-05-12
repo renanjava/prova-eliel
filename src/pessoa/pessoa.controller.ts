@@ -37,7 +37,7 @@ export class PessoaController {
     await this.findOne(id);
     return await this.minioClientService.upload({
       ...image,
-      fieldname: id,
+      id: id,
     });
   }
 

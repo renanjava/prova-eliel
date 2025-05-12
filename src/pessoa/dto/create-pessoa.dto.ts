@@ -13,5 +13,5 @@ export class CreatePessoaDto implements PessoaEntity {
 
   @IsOptional()
   @IsString()
-  profilePictureUrl?: string | undefined;
+  fotoPerfil?: string | undefined;
 }
