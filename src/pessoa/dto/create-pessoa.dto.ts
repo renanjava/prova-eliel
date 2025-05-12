@@ -1,4 +1,4 @@
-import { IsString, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { PessoaEntity } from '../entities/pessoa.entity';
 
 export class CreatePessoaDto implements PessoaEntity {
@@ -10,4 +10,8 @@ export class CreatePessoaDto implements PessoaEntity {
 
   @IsUUID()
   trabalhoId: string;
+
+  @IsOptional()
+  @IsString()
+  profilePictureUrl?: string | undefined;
 }

@@ -6,10 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { PessoaService } from './pessoa.service';
 import { CreatePessoaDto } from './dto/create-pessoa.dto';
 import { UpdatePessoaDto } from './dto/update-pessoa.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { BufferedFile } from 'src/datastorage/interfaces/bufferedFile.interface';
 
 @Controller('pessoa')
 export class PessoaController {
@@ -18,6 +22,19 @@ export class PessoaController {
   @Post()
   async create(@Body() createPessoaDto: CreatePessoaDto) {
     return await this.pessoaService.create(createPessoaDto);
+  }
+
+  @Post('/:id')
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadProfilePicture(
+    @Param('id') id: string,
+    @UploadedFile() image: BufferedFile,
+  ) {
+    await this.findOne(id);
+    return await this.pessoaService.uploadProfilePicture({
+      ...image,
+      fieldname: id,
+    });
   }
 
   @Get()
