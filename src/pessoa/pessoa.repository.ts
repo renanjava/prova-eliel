@@ -9,7 +9,7 @@ export class PessoaRepository {
   async pessoa(
     pessoaWhereUniqueInput: Prisma.PessoaWhereUniqueInput,
   ): Promise<Pessoa | null> {
-    return this.prisma.pessoa.findUnique({
+    return this.prisma.pessoa.findFirst({
       where: pessoaWhereUniqueInput,
       include: { trabalho: true },
     });

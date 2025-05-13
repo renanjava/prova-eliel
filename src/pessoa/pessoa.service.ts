@@ -18,8 +18,8 @@ export class PessoaService {
     return await this.pessoaRepository.pessoas({});
   }
 
-  async findOne(id: string) {
-    const pessoaFounded = await this.pessoaRepository.pessoa({ id: id });
+  async findOne(filter: { [key: string]: any }) {
+    const pessoaFounded = await this.pessoaRepository.pessoa(filter as any);
     if (!pessoaFounded) {
       throw new NotFoundException('Pessoa não encontrada');
     }
@@ -27,7 +27,7 @@ export class PessoaService {
   }
 
   async update(id: string, updatePessoaDto: UpdatePessoaDto) {
-    await this.findOne(id);
+    await this.findOne({ id });
     return await this.pessoaRepository.updatePessoa({
       where: { id: id },
       data: updatePessoaDto,
@@ -35,7 +35,7 @@ export class PessoaService {
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    await this.findOne({ id });
     return await this.pessoaRepository.deletePessoa({ id: id });
   }
 }

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
+  ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -110,19 +111,29 @@ export class MinioClientService {
 
   private getFileName(originalName: string, pessoaId: string) {
     const extension = this.getFileExtension(originalName);
-
     return `${this.encodeUUID(pessoaId)}-profile-picture${extension}`;
   }
 
   async download(
+    pessoaId: string,
     bucket: string = this.bucketName,
-    fileName: string,
   ): Promise<Readable> {
-    return await this.minioService.client.getObject(bucket, fileName);
+    const { fotoPerfil } = await this.pessoaService.findOne({ id: pessoaId });
+    if (!fotoPerfil) {
+      throw new NotFoundException('Foto de perfil não encontrada');
+    }
+    return await this.minioService.client.getObject(bucket, fotoPerfil);
   }
 
-  async delete(bucket: string, fileName: string) {
-    return await this.minioService.client.removeObject(bucket, fileName);
+  async delete(pessoaId: string, bucket: string = this.bucketName) {
+    const { fotoPerfil } = await this.pessoaService.findOne({ id: pessoaId });
+    if (!fotoPerfil) {
+      throw new NotFoundException('Foto de perfil não encontrada');
+    }
+    await this.minioService.client.removeObject(bucket, fotoPerfil);
+    return await this.pessoaService.update(pessoaId, {
+      fotoPerfil: null as any,
+    });
   }
 
   private encodeUUID(uuid: string): string {

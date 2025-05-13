@@ -9,7 +9,9 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { PessoaService } from './pessoa.service';
 import { CreatePessoaDto } from './dto/create-pessoa.dto';
 import { UpdatePessoaDto } from './dto/update-pessoa.dto';
@@ -28,7 +30,7 @@ export class PessoaController {
     return await this.pessoaService.create(createPessoaDto);
   }
 
-  @Post('/:id')
+  @Post('pfp/:id')
   @UseInterceptors(FileInterceptor('image'))
   async uploadProfilePicture(
     @Param('id') id: string,
@@ -41,6 +43,18 @@ export class PessoaController {
     });
   }
 
+  @Get('pfp/:id')
+  async findProfilePicture(@Param('id') id: string, @Res() res: Response) {
+    const imageStream = await this.minioClientService.download(id);
+    res.setHeader('Content-Type', 'image/jpeg');
+    imageStream.pipe(res);
+  }
+
+  @Delete('pfp/:id')
+  async removeProfilePicture(@Param('id') id: string) {
+    return await this.minioClientService.delete(id);
+  }
+
   @Get()
   async findAll() {
     return await this.pessoaService.findAll();
@@ -48,7 +62,7 @@ export class PessoaController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return await this.pessoaService.findOne(id);
+    return await this.pessoaService.findOne({ id });
   }
 
   @Patch(':id')
